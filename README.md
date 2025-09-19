@@ -1,4 +1,28 @@
-# 🏢 Seattle Building Energy Consumption Prediction
+# 🏢 Sea### Objectifs Globaux du Système
+
+-   **Prédiction énergétique** : Développer d**Modèles comparés :**
+-   **Linear Regression** : Modèle de référence linéaire
+-   **SVR (Support Vector Regressor)** : Modèle non-linéaire avec kernel RBF
+-   **Random Forest** : Modèle d'ensemble basé sur les arbres
+-   **Gradient Boosting** : Modèle d'ensemble avec boosting séquentiel
+
+**Évaluation :**
+
+-   Validation croisée 5-folds avec stratégie cohérente (`KFold`)
+-   Métriques : R², MAE, RMSE
+-   Analyse du surapprentissage
+-   Comparaison équitable avec mêmes splits CVML pour prédire les émissions de GES des bâtiments
+-   **Analyse des facteurs** : Identifier les caractéristiques des bâtiments qui influencent le plus les émissions
+-   **Comparaison de modèles** : Évaluer plusieurs algorithmes (Linear Regression, SVR, Random Forest, Gradient Boosting) pour déterminer le plus performant
+
+### 4. Optimisation
+
+-   Grid Search pour l'optimisation des hyperparamètres
+-   Optimisation de Random Forest et Gradient Boosting
+-   Validation avec stratégie CV cohérente
+-   Analyse de l'importance des features
+-   Système de prédiction pour nouveaux bâtiments
+-   **Inférence** : Développer un système de prédiction pour de nouveaux bâtimentsuilding Energy Consumption Prediction
 
 Un projet de machine learning pour prédire la consommation énergétique et les émissions de GES des bâtiments de Seattle basé sur les données du programme de benchmarking énergétique de la ville.
 
@@ -17,9 +41,10 @@ Ce projet analyse les données du programme de benchmarking énergétique de Sea
 
 ```
 ├── assets/                                    # Données et fichiers de ressources
-│   ├── 2016_Building_Energy_Benchmarking.csv # Dataset original
-│   ├── building_consumption_cleaned.csv      # Données nettoyées
-│   └── ...                                   # Autres versions des données
+│   ├── 2016_Building_Energy_Benchmarking.csv # Dataset original (3000+ bâtiments)
+│   ├── building_consumption_post_EDA.csv     # Données après analyse exploratoire et nettoyage
+│   ├── building_consumption_post_feature_engineering.csv # Données avec nouvelles features
+│   └── building_consumption_cleaned.csv      # Données finales prêtes pour modélisation
 ├── notebooks/                                # Notebooks Jupyter d'analyse
 │   ├── 1. EDA.ipynb                         # Analyse exploratoire
 │   ├── 2. Feature Engineering.ipynb         # Ingénierie des features
@@ -48,6 +73,18 @@ _Variable actuellement configurée_ : `TotalGHGEmissions` (voir `config.py`)
 -   **Taille** : ~3000+ bâtiments
 -   **Features** : Caractéristiques des bâtiments (surface, âge, usage, etc.)
 -   **Cible** : Consommation énergétique / Émissions GES
+
+### Pipeline de Données
+
+```
+2016_Building_Energy_Benchmarking.csv (Original)
+    ↓ [EDA + Nettoyage]
+building_consumption_post_EDA.csv
+    ↓ [Feature Engineering]
+building_consumption_post_feature_engineering.csv
+    ↓ [Préparation finale]
+building_consumption_cleaned.csv (Modélisation)
+```
 
 ### Principales caractéristiques analysées :
 
@@ -122,24 +159,39 @@ jupyter notebook
 2. **Feature Engineering** : Suivre les notebooks 2 et 3 pour la préparation
 3. **Modélisation** : Utiliser le notebook 4 pour comparer les modèles
 4. **Optimisation** : Notebook 5 pour améliorer le meilleur modèle
+5. **Prédiction** : Utiliser la fonction `predict_building_energy()` pour de nouveaux bâtiments
 
 ## 📈 Résultats Principaux
 
 ### Comparaison des Modèles
 
-| Modèle            | R² Test | MAE Test | RMSE Test |
-| ----------------- | ------- | -------- | --------- |
-| Linear Regression | 0.XXX   | XXX      | XXX       |
-| SVR               | 0.XXX   | XXX      | XXX       |
-| Random Forest     | 0.XXX   | XXX      | XXX       |
+| Modèle                | R² Test   | MAE Test | RMSE Test | Surapprentissage    |
+| --------------------- | --------- | -------- | --------- | ------------------- |
+| **Linear Regression** | 0.363     | 182      | 438       | Faible (0.088)      |
+| **SVR**               | -0.024    | 135      | 566       | Très faible (0.002) |
+| **Random Forest**     | 0.551     | 110      | 364       | Modéré (0.379)      |
+| **Gradient Boosting** | **0.657** | **107**  | **310**   | Modéré (0.309)      |
 
-_Note : Résultats à compléter après exécution complète_
+### Optimisation des Hyperparamètres
+
+| Modèle                              | Configuration                          | R² Test   | Amélioration |
+| ----------------------------------- | -------------------------------------- | --------- | ------------ |
+| **Random Forest (Baseline)**        | n_estimators=100, max_depth=20         | 0.543     | -            |
+| **Random Forest (Optimisé)**        | n_estimators=500, max_depth=20         | 0.551     | +0.008       |
+| **Gradient Boosting (Baseline)**    | n_estimators=200, max_depth=3, lr=0.1  | 0.655     | +0.112       |
+| **🏆 Gradient Boosting (Optimisé)** | n_estimators=300, max_depth=3, lr=0.05 | **0.657** | **+0.114**   |
 
 ### Insights Clés
 
--   **Meilleur modèle** : Random Forest (généralement le plus performant)
--   **Features importantes** : Surface du bâtiment, score ENERGY STAR, intensité énergétique
--   **Performance** : R² > 0.8 attendu sur les données de test
+-   **🏆 Meilleur modèle** : **Gradient Boosting Optimisé** (R² = 0.657)
+-   **📊 Performance** : Explique 65.7% de la variance des émissions GES
+-   **🔧 Optimisation efficace** : +11.4% d'amélioration vs Random Forest baseline
+-   **⚖️ Équilibre optimal** : Bon compromis performance/surapprentissage
+-   **📈 Features importantes** :
+    -   `NumberofBuildings` (importance: ~38%)
+    -   `PropertyGFABuilding(s)` (importance: ~31%)
+    -   `ENERGYSTARScore` (importance: ~6%)
+-   **🎯 Capacité de prédiction** : Système fonctionnel pour nouveaux bâtiments
 
 ## 🛠️ Technologies Utilisées
 
